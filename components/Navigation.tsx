@@ -21,7 +21,6 @@ export default function Navigation() {
               HK
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Operations Suite</p>
               <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">House Keeping Management Software</h1>
             </div>
           </div>
