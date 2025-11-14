@@ -79,6 +79,75 @@ workerMap = {
 // To find John: workerMap.get("W001") → instant result!
 ```
 
+#### **🔒 Collision Handling - How We Avoid Hash Map Collisions**
+
+**What is a collision?**
+A collision happens when two different keys produce the same hash value. Think of it like two people having the same phone number - the hash map needs to know which one you want!
+
+**How JavaScript's Map handles collisions internally:**
+
+JavaScript's `Map` uses a sophisticated internal implementation that handles collisions automatically. Here's how:
+
+1. **Hash Function:** When you add a key like `"W001"`, JavaScript converts it to a hash code (a number)
+2. **Collision Detection:** If two keys produce the same hash, JavaScript detects this
+3. **Collision Resolution:** JavaScript uses one of these methods:
+   - **Chaining:** Stores multiple key-value pairs in the same bucket (like a linked list)
+   - **Open Addressing:** Finds the next available slot in the hash table
+   - **Rehashing:** Expands the hash table and redistributes keys
+
+**Why collisions are extremely unlikely in our code:**
+
+1. **Unique Sequential IDs:**
+   ```typescript
+   // Worker IDs are auto-generated sequentially
+   const id = `W${String(nextWorkerId).padStart(3, '0')}`;
+   // Results in: W001, W002, W003, W004... (always unique!)
+   ```
+
+2. **No Manual Key Entry:** Users can't manually create worker IDs, so duplicates are impossible
+
+3. **Single Source of Truth:** The `nextWorkerId` counter ensures each ID is unique
+
+**What happens if a duplicate ID is somehow added?**
+
+If the same key is added twice to a Map, the **second value overwrites the first**:
+
+```typescript
+workerMap.set("W001", worker1);  // First worker
+workerMap.set("W001", worker2);  // Overwrites worker1!
+
+workerMap.get("W001");  // Returns worker2 (the last one added)
+```
+
+**Safeguards in our implementation:**
+
+1. **Sequential ID Generation:**
+   ```typescript
+   // Each worker gets a unique ID automatically
+   const id = `W${String(nextWorkerId).padStart(3, '0')}`;
+   nextWorkerId++;  // Increment ensures next ID is different
+   ```
+
+2. **Map Rebuilding on Load:**
+   ```typescript
+   // When loading from storage, Map is cleared and rebuilt
+   workerMap.clear();
+   workers.forEach(worker => {
+     workerMap.set(worker.id, worker);  // Each ID added once
+   });
+   ```
+
+3. **No Direct Map Manipulation:** The Map is only modified through controlled functions (`addWorker()`, `initializeData()`)
+
+**Performance Note:**
+Even if collisions occurred, JavaScript's Map handles them efficiently. The worst-case lookup time would be O(k) where k is the number of collisions, but in practice with our unique IDs, it's always O(1).
+
+**Summary:**
+- ✅ JavaScript's Map handles collisions internally (we don't need to worry)
+- ✅ Our worker IDs are guaranteed unique (sequential generation)
+- ✅ Even if collisions occurred, Map handles them efficiently
+- ✅ No manual key entry prevents accidental duplicates
+
 ---
 
 ### 3. **SET** - Counting Unique Workers
