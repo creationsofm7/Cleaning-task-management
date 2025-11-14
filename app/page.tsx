@@ -13,6 +13,8 @@ import {
   unassignTask,
   completeTask,
   initializeData,
+  exportTasksToCSV,
+  exportWorkersToCSV,
 } from '@/lib/data';
 import { Worker, Task } from '@/lib/types';
 
@@ -77,6 +79,42 @@ export default function Dashboard() {
     wrapAction(() => completeTask(taskId), `Task ${taskId} completed`);
   };
 
+  const handleExportTasksCSV = () => {
+    try {
+      const csvContent = exportTasksToCSV();
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `tasks_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      handleFeedback('success', 'Tasks exported successfully');
+    } catch (err) {
+      handleFeedback('error', 'Failed to export tasks');
+    }
+  };
+
+  const handleExportWorkersCSV = () => {
+    try {
+      const csvContent = exportWorkersToCSV();
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `workers_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      handleFeedback('success', 'Workers exported successfully');
+    } catch (err) {
+      handleFeedback('error', 'Failed to export workers');
+    }
+  };
+
   const activeTasks = tasks.filter((task) => !task.completed);
   const completedTasks = tasks.filter((task) => task.completed);
 
@@ -94,8 +132,22 @@ export default function Dashboard() {
 
       <main className="relative">
         <div className="max-w-7xl mx-auto pt-8 pb-16 px-4 sm:px-6 lg:px-8 space-y-8">
-          <div>
+          <div className="flex justify-between items-center">
             <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
+            <div className="flex gap-2">
+              <button
+                onClick={handleExportTasksCSV}
+                className="px-4 py-2 bg-green-500 text-white"
+              >
+                Export Tasks
+              </button>
+              <button
+                onClick={handleExportWorkersCSV}
+                className="px-4 py-2 bg-blue-500 text-white"
+              >
+                Export Workers
+              </button>
+            </div>
           </div>
 
           {/* Worker Statistics */}

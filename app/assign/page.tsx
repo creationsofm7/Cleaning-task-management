@@ -10,6 +10,8 @@ import {
   getAvailableWorkers,
   initializeData,
   validateDate,
+  exportTasksToCSV,
+  exportWorkersToCSV,
 } from '@/lib/data';
 import { Priority, Worker } from '@/lib/types';
 
@@ -44,6 +46,42 @@ export default function AssignPage() {
     } else {
       setError(message);
       setSuccess('');
+    }
+  };
+
+  const handleExportTasksCSV = () => {
+    try {
+      const csvContent = exportTasksToCSV();
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `tasks_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showMessage('success', 'Tasks exported successfully');
+    } catch (err) {
+      showMessage('error', 'Failed to export tasks');
+    }
+  };
+
+  const handleExportWorkersCSV = () => {
+    try {
+      const csvContent = exportWorkersToCSV();
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `workers_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showMessage('success', 'Workers exported successfully');
+    } catch (err) {
+      showMessage('error', 'Failed to export workers');
     }
   };
 
@@ -130,7 +168,23 @@ export default function AssignPage() {
             {/* Workers Section - Left Column */}
             <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
               <div className="p-4 border-b border-slate-200">
-                <h2 className="text-lg font-medium">Workers ({workers.length})</h2>
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-medium">Workers ({workers.length})</h2>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleExportTasksCSV}
+                      className="px-3 py-1 bg-green-500 text-white text-sm"
+                    >
+                      Export Tasks
+                    </button>
+                    <button
+                      onClick={handleExportWorkersCSV}
+                      className="px-3 py-1 bg-blue-500 text-white text-sm"
+                    >
+                      Export Workers
+                    </button>
+                  </div>
+                </div>
               </div>
               <div className="p-4 max-h-96 overflow-y-auto">
                 {workers.length === 0 ? (

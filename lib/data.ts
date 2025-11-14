@@ -220,7 +220,7 @@ export function validateDate(dateString: string): boolean {
   return date instanceof Date && !isNaN(date.getTime());
 }
 
-export function exportToCSV(): string {
+export function exportTasksToCSV(): string {
   const headers = ['ID', 'Description', 'Priority', 'Time Estimate', 'Deadline', 'Assigned To', 'Status', 'Created At'];
   const rows = tasks.map(task => [
     task.id,
@@ -234,4 +234,21 @@ export function exportToCSV(): string {
   ]);
 
   return [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+}
+
+export function exportWorkersToCSV(): string {
+  const headers = ['ID', 'Name', 'Availability', 'Assigned Hours', 'Available Hours'];
+  const rows = workers.map(worker => [
+    worker.id,
+    worker.name,
+    worker.availability ? 'Available' : 'Unavailable',
+    worker.totalAssignedHours.toString(),
+    Math.max(0, 8 - worker.totalAssignedHours).toString(),
+  ]);
+
+  return [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+}
+
+export function exportToCSV(): string {
+  return exportTasksToCSV();
 }

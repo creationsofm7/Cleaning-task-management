@@ -12,7 +12,7 @@ This application implements a worker management system for housekeeping services
 - **Workload Balancing**: Capacity-aware task assignment with 8-hour daily limits
 - **Advanced Filtering**: Search, sort, and filter tasks by multiple criteria
 - **Real-time Statistics**: Monitor worker utilization and task completion
-- **CSV Export**: Export task and worker data for reporting
+- **CSV Export**: Export task and worker data for reporting and analysis
 
 ## 🏗️ System Architecture
 
@@ -250,6 +250,8 @@ export function assignTaskToWorker(taskId: string, workerId: string): void {
 | Worker Capacity Filter | O(n) | O(1) | Array Filter | Quick availability checks |
 | Set Deduplication | O(n) | O(k) | Hash Set | Accurate statistics |
 | Task Assignment | O(n) | O(1) | Hash Map + Array | Atomic operations |
+| CSV Export (Tasks) | O(n) | O(n) | Array Iteration | Complete data export |
+| CSV Export (Workers) | O(n) | O(n) | Array Iteration | Complete data export |
 
 **Complexity Notes:**
 - **Hash Map Operations:** O(1) average case due to JavaScript's efficient Map implementation
@@ -325,10 +327,16 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 - **Advanced Filtering**: Search by keyword, status, priority
 - **Multiple Sort Options**: Priority, deadline, creation date
 - **Bulk Operations**: Assign, unassign, complete tasks
-- **CSV Export**: Download task data for reporting
+- **CSV Export**: Download task and worker data for reporting and analysis
 - **Real-time Updates**: Live queue statistics
 
-### 4. Data Persistence
+### 4. CSV Export Functionality
+- **Task Export**: Includes ID, description, priority, time estimate, deadline, assigned worker, status, and creation date
+- **Worker Export**: Includes ID, name, availability status, assigned hours, and available hours
+- **Automatic Downloads**: Files are named with current date (e.g., `tasks_2024-01-15.csv`)
+- **Data Integrity**: All exported data matches the current application state
+
+### 5. Data Persistence
 - All data automatically saves to browser localStorage
 - No external database required
 - Data persists between browser sessions

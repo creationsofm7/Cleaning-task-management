@@ -9,7 +9,8 @@ import {
   sortTasksByPriority,
   sortTasksByDeadline,
   searchTasks,
-  exportToCSV,
+  exportTasksToCSV,
+  exportWorkersToCSV,
   assignTaskToWorker,
   unassignTask,
   completeTask,
@@ -134,9 +135,9 @@ export default function TasksPage() {
     }
   };
 
-  const handleExportCSV = () => {
+  const handleExportTasksCSV = () => {
     try {
-      const csvContent = exportToCSV();
+      const csvContent = exportTasksToCSV();
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
@@ -149,6 +150,24 @@ export default function TasksPage() {
       showSuccess('Tasks exported successfully');
     } catch (err) {
       showError('Failed to export tasks');
+    }
+  };
+
+  const handleExportWorkersCSV = () => {
+    try {
+      const csvContent = exportWorkersToCSV();
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `workers_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showSuccess('Workers exported successfully');
+    } catch (err) {
+      showError('Failed to export workers');
     }
   };
 
@@ -225,6 +244,18 @@ export default function TasksPage() {
                 className="px-4 py-2 border"
               >
                 Clear
+              </button>
+              <button
+                onClick={handleExportTasksCSV}
+                className="px-4 py-2 bg-green-500 text-white"
+              >
+                Export Tasks
+              </button>
+              <button
+                onClick={handleExportWorkersCSV}
+                className="px-4 py-2 bg-blue-500 text-white"
+              >
+                Export Workers
               </button>
             </div>
           </section>
