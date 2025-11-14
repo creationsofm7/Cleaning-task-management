@@ -5,7 +5,6 @@ import Navigation from '@/components/Navigation';
 import TaskTable from '@/components/TaskTable';
 import {
   getTasks,
-  getWorkers,
   getAvailableWorkers,
   sortTasksByPriority,
   sortTasksByDeadline,
@@ -16,7 +15,7 @@ import {
   completeTask,
   initializeData,
 } from '@/lib/data';
-import { Task, Priority } from '@/lib/types';
+import { Task, Priority, Worker } from '@/lib/types';
 
 type SortOption = 'priority' | 'deadline' | 'created' | 'none';
 type FilterOption = 'all' | 'active' | 'completed' | 'assigned' | 'unassigned';
@@ -24,11 +23,10 @@ type FilterOption = 'all' | 'active' | 'completed' | 'assigned' | 'unassigned';
 export default function TasksPage() {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
-  const [availableWorkers, setAvailableWorkers] = useState<any[]>([]);
+  const [availableWorkers, setAvailableWorkers] = useState<Worker[]>([]);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
 
-  // Filters and sorting
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<SortOption>('none');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
@@ -44,45 +42,38 @@ export default function TasksPage() {
   }, [allTasks, searchQuery, sortBy, filterBy, priorityFilter]);
 
   const loadData = () => {
-    const tasks = getTasks();
-    const workers = getAvailableWorkers();
-    setAllTasks(tasks);
-    setAvailableWorkers(workers);
+    setAllTasks(getTasks());
+    setAvailableWorkers(getAvailableWorkers());
   };
 
   const applyFiltersAndSorting = () => {
     let tasks = [...allTasks];
 
-    // Apply search filter
     if (searchQuery.trim()) {
       tasks = searchTasks(searchQuery.trim());
     }
 
-    // Apply status filter
     switch (filterBy) {
       case 'active':
-        tasks = tasks.filter(task => !task.completed);
+        tasks = tasks.filter((task) => !task.completed);
         break;
       case 'completed':
-        tasks = tasks.filter(task => task.completed);
+        tasks = tasks.filter((task) => task.completed);
         break;
       case 'assigned':
-        tasks = tasks.filter(task => task.assignedTo !== null);
+        tasks = tasks.filter((task) => task.assignedTo !== null);
         break;
       case 'unassigned':
-        tasks = tasks.filter(task => task.assignedTo === null);
+        tasks = tasks.filter((task) => task.assignedTo === null);
         break;
       default:
-        // 'all' - no filtering
         break;
     }
 
-    // Apply priority filter
     if (priorityFilter !== 'all') {
-      tasks = tasks.filter(task => task.priority === priorityFilter);
+      tasks = tasks.filter((task) => task.priority === priorityFilter);
     }
 
-    // Apply sorting
     switch (sortBy) {
       case 'priority':
         tasks = sortTasksByPriority(tasks);
@@ -91,12 +82,11 @@ export default function TasksPage() {
         tasks = sortTasksByDeadline(tasks);
         break;
       case 'created':
-        tasks = [...tasks].sort((a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        tasks = [...tasks].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
         break;
       default:
-        // 'none' - keep original order
         break;
     }
 
@@ -106,7 +96,7 @@ export default function TasksPage() {
   const showSuccess = (message: string) => {
     setSuccess(message);
     setError('');
-    setTimeout(() => setSuccess(''), 3000);
+    setTimeout(() => setSuccess(''), 2500);
   };
 
   const showError = (message: string) => {
@@ -169,233 +159,211 @@ export default function TasksPage() {
     setPriorityFilter('all');
   };
 
+  const stats = [
+    {
+      label: 'Total Tasks',
+      value: allTasks.length,
+      badge: 'Pipeline',
+      accent: 'from-purple-500 to-indigo-500',
+    },
+    {
+      label: 'Active Tasks',
+      value: allTasks.filter((t) => !t.completed).length,
+      badge: 'In Motion',
+      accent: 'from-amber-500 to-rose-500',
+    },
+    {
+      label: 'Completed',
+      value: allTasks.filter((t) => t.completed).length,
+      badge: 'Closed',
+      accent: 'from-emerald-500 to-teal-500',
+    },
+    {
+      label: 'Unassigned',
+      value: allTasks.filter((t) => !t.assignedTo && !t.completed).length,
+      badge: 'Queue',
+      accent: 'from-blue-500 to-cyan-500',
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="page-shell min-h-screen">
       <Navigation />
 
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Task Management</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            View, sort, filter, and manage all tasks
-          </p>
-        </div>
-
-        {/* Error/Success Messages */}
-        {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-            {success}
-          </div>
-        )}
-
-        {/* Controls */}
-        <div className="bg-white shadow rounded-lg mb-6">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              {/* Search */}
+      <main className="relative">
+        <div className="max-w-7xl mx-auto pt-12 pb-16 px-4 sm:px-6 lg:px-8 space-y-10">
+          <section className="card p-8 bg-gradient-to-br from-white via-white to-slate-50 relative overflow-hidden">
+            <div className="absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_right,_rgba(37,99,235,0.08),_transparent_55%)]" />
+            <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
               <div>
-                <label htmlFor="search" className="block text-sm font-medium text-gray-700">
-                  Search
-                </label>
+                <p className="text-xs uppercase tracking-[0.6em] text-slate-400">Task Command</p>
+                <h1 className="mt-3 text-4xl font-semibold text-slate-900">Operational Workbench</h1>
+                <p className="mt-4 text-slate-500 max-w-2xl">
+                  Prioritize cleans, balance worker loads, and keep every facility spotless. Filter by priority,
+                  deadline, assignment state, or search by keyword with lightning responsiveness.
+                </p>
+              </div>
+              <div className="glass-panel rounded-3xl px-8 py-6 text-center">
+                <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Live Queue</p>
+                <p className="mt-4 text-5xl font-semibold text-slate-900">{filteredTasks.length}</p>
+                <p className="text-sm text-slate-500">Tasks matching filters</p>
+                <div className="mt-6 flex flex-col gap-2 text-left text-sm text-slate-600">
+                  <div className="flex items-center justify-between">
+                    <span>High priority</span>
+                    <span className="font-semibold text-slate-900">
+                      {filteredTasks.filter((t) => t.priority === 'high').length}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Assigned</span>
+                    <span className="font-semibold text-slate-900">
+                      {filteredTasks.filter((t) => t.assignedTo).length}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Due in 48h</span>
+                    <span className="font-semibold text-rose-600">
+                      {filteredTasks.filter(
+                        (t) => new Date(t.deadline).getTime() - Date.now() < 2 * 24 * 60 * 60 * 1000
+                      ).length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {error && (
+            <div className="rounded-2xl border border-rose-100 bg-rose-50/80 text-rose-700 px-6 py-4 shadow">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/80 text-emerald-700 px-6 py-4 shadow">
+              {success}
+            </div>
+          )}
+
+          <section className="card p-6 space-y-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex-1 min-w-[220px]">
+                <label className="text-xs uppercase tracking-[0.3em] text-slate-400">Search</label>
                 <input
                   type="text"
-                  id="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="Search tasks..."
+                  placeholder="Search by task, ID, or worker..."
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 />
               </div>
-
-              {/* Sort By */}
-              <div>
-                <label htmlFor="sortBy" className="block text-sm font-medium text-gray-700">
-                  Sort By
-                </label>
+              <div className="flex-1 min-w-[180px]">
+                <label className="text-xs uppercase tracking-[0.3em] text-slate-400">Sort</label>
                 <select
-                  id="sortBy"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 >
-                  <option value="none">No Sorting</option>
+                  <option value="none">No sorting</option>
                   <option value="priority">Priority</option>
                   <option value="deadline">Deadline</option>
-                  <option value="created">Created Date</option>
+                  <option value="created">Created date</option>
                 </select>
               </div>
-
-              {/* Filter By Status */}
-              <div>
-                <label htmlFor="filterBy" className="block text-sm font-medium text-gray-700">
-                  Status
-                </label>
+              <div className="flex-1 min-w-[180px]">
+                <label className="text-xs uppercase tracking-[0.3em] text-slate-400">Status</label>
                 <select
-                  id="filterBy"
                   value={filterBy}
                   onChange={(e) => setFilterBy(e.target.value as FilterOption)}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 >
-                  <option value="all">All Tasks</option>
-                  <option value="active">Active Only</option>
-                  <option value="completed">Completed Only</option>
-                  <option value="assigned">Assigned Only</option>
-                  <option value="unassigned">Unassigned Only</option>
+                  <option value="all">All</option>
+                  <option value="active">Active</option>
+                  <option value="completed">Completed</option>
+                  <option value="assigned">Assigned</option>
+                  <option value="unassigned">Unassigned</option>
                 </select>
               </div>
-
-              {/* Filter By Priority */}
-              <div>
-                <label htmlFor="priorityFilter" className="block text-sm font-medium text-gray-700">
-                  Priority
-                </label>
+              <div className="flex-1 min-w-[180px]">
+                <label className="text-xs uppercase tracking-[0.3em] text-slate-400">Priority</label>
                 <select
-                  id="priorityFilter"
                   value={priorityFilter}
                   onChange={(e) => setPriorityFilter(e.target.value as Priority | 'all')}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 >
-                  <option value="all">All Priorities</option>
+                  <option value="all">All</option>
                   <option value="high">High</option>
                   <option value="medium">Medium</option>
                   <option value="low">Low</option>
                 </select>
               </div>
-
-              {/* Actions */}
-              <div className="flex items-end space-x-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={clearFilters}
-                  className="px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
                 >
                   Clear
                 </button>
                 <button
                   onClick={handleExportCSV}
-                  className="px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 text-sm font-semibold shadow hover:shadow-lg"
                 >
                   Export CSV
                 </button>
               </div>
             </div>
-          </div>
+            <div className="flex flex-wrap gap-3">
+              {(['all', 'active', 'completed', 'assigned', 'unassigned'] as FilterOption[]).map(
+                (status) => (
+                  <button
+                    key={status}
+                    onClick={() => setFilterBy(status)}
+                    className={`badge px-4 py-2 rounded-full text-xs ${
+                      filterBy === status
+                        ? 'bg-slate-900 text-white'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {status.toUpperCase()}
+                  </button>
+                )
+              )}
+            </div>
+          </section>
+          <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            {stats.map((stat) => (
+              <div key={stat.label} className="card p-6 relative overflow-hidden">
+                <div className={`absolute inset-x-4 top-4 h-32 rounded-3xl bg-gradient-to-r ${stat.accent} opacity-20`} />
+                <div className="relative">
+                  <p className="text-xs uppercase tracking-[0.4em] text-slate-400">{stat.badge}</p>
+                  <p className="mt-4 text-4xl font-semibold text-slate-900">{stat.value}</p>
+                  <p className="mt-2 text-sm text-slate-500">{stat.label}</p>
+                </div>
+              </div>
+            ))}
+          </section>
+
+          <section className="space-y-6">
+            <TaskTable
+              tasks={filteredTasks}
+              showCompleted={filterBy === 'all' || filterBy === 'completed'}
+              onAssignTask={handleAssignTask}
+              onUnassignTask={handleUnassignTask}
+              onCompleteTask={handleCompleteTask}
+              availableWorkers={availableWorkers}
+            />
+
+            {filteredTasks.length === 0 && (
+              <div className="card p-8 text-center text-slate-400">
+                {allTasks.length === 0
+                  ? 'No tasks found. Create assignments to populate the queue.'
+                  : 'No tasks match your current filters.'}
+              </div>
+            )}
+          </section>
         </div>
-
-        {/* Task Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">T</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Total Tasks
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {allTasks.length}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">A</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Active Tasks
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {allTasks.filter(t => !t.completed).length}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">C</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Completed
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {allTasks.filter(t => t.completed).length}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">U</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Unassigned
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {allTasks.filter(t => !t.assignedTo && !t.completed).length}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tasks Table */}
-        <TaskTable
-          tasks={filteredTasks}
-          showCompleted={filterBy === 'all' || filterBy === 'completed'}
-          onAssignTask={handleAssignTask}
-          onUnassignTask={handleUnassignTask}
-          onCompleteTask={handleCompleteTask}
-          availableWorkers={availableWorkers}
-        />
-
-        {filteredTasks.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">
-              {allTasks.length === 0 ? 'No tasks found. Create some tasks first.' : 'No tasks match your current filters.'}
-            </p>
-          </div>
-        )}
-      </div>
+      </main>
     </div>
   );
 }
+
+

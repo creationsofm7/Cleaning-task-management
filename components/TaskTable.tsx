@@ -1,6 +1,6 @@
 'use client';
 
-import { Task } from '@/lib/types';
+import { Task, Worker } from '@/lib/types';
 
 interface TaskTableProps {
   tasks: Task[];
@@ -8,8 +8,23 @@ interface TaskTableProps {
   onAssignTask?: (taskId: string, workerId: string) => void;
   onUnassignTask?: (taskId: string) => void;
   onCompleteTask?: (taskId: string) => void;
-  availableWorkers?: Array<{ id: string; name: string }>;
+  availableWorkers?: Worker[];
 }
+
+const PRIORITY_STYLES: Record<string, { label: string; classes: string }> = {
+  high: {
+    label: 'High Priority',
+    classes: 'bg-rose-50 text-rose-600 border border-rose-100',
+  },
+  medium: {
+    label: 'Medium Priority',
+    classes: 'bg-amber-50 text-amber-600 border border-amber-100',
+  },
+  low: {
+    label: 'Low Priority',
+    classes: 'bg-emerald-50 text-emerald-600 border border-emerald-100',
+  },
+};
 
 export default function TaskTable({
   tasks,
@@ -17,142 +32,142 @@ export default function TaskTable({
   onAssignTask,
   onUnassignTask,
   onCompleteTask,
-  availableWorkers = []
+  availableWorkers = [],
 }: TaskTableProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString();
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'bg-red-100 text-red-800';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'low':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const filteredTasks = showCompleted ? tasks : tasks.filter(task => !task.completed);
+  const filteredTasks = showCompleted ? tasks : tasks.filter((task) => !task.completed);
 
   return (
-    <div className="bg-white shadow overflow-hidden sm:rounded-md">
-      <div className="px-4 py-5 sm:px-6">
-        <h3 className="text-lg leading-6 font-medium text-gray-900">
-          Tasks {showCompleted ? '(All)' : '(Active)'}
-        </h3>
-        <p className="mt-1 max-w-2xl text-sm text-gray-500">
-          {showCompleted ? 'All tasks including completed ones.' : 'Active tasks that need attention.'}
-        </p>
+    <div className="card overflow-hidden">
+      <div className="px-6 py-6 border-b border-slate-100/80 bg-gradient-to-r from-white via-white to-indigo-50">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Workflow</p>
+            <h3 className="text-2xl font-semibold text-slate-900">
+              Tasks {showCompleted ? 'Overview' : 'In Progress'}
+            </h3>
+            <p className="text-sm text-slate-500 mt-2">
+              {showCompleted ? 'All assignments including completed work' : 'Active queue awaiting action'}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-4xl font-semibold text-slate-900">{filteredTasks.length}</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Tasks</p>
+          </div>
+        </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-slate-100 text-sm">
+          <thead className="bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                ID
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Description
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Priority
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Time
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Deadline
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Assigned To
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              <th className="px-6 py-3 text-left font-semibold">ID</th>
+              <th className="px-6 py-3 text-left font-semibold">Task</th>
+              <th className="px-6 py-3 text-left font-semibold">Priority</th>
+              <th className="px-6 py-3 text-left font-semibold">Time</th>
+              <th className="px-6 py-3 text-left font-semibold">Deadline</th>
+              <th className="px-6 py-3 text-left font-semibold">Assignment</th>
+              <th className="px-6 py-3 text-left font-semibold">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-slate-100 bg-white">
             {filteredTasks.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
+                <td colSpan={7} className="px-6 py-10 text-center text-slate-400">
                   No tasks found.
                 </td>
               </tr>
             ) : (
-              filteredTasks.map((task) => (
-                <tr key={task.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {task.id}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                    {task.description}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
-                      {task.priority.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {task.timeEstimate}h
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatDate(task.deadline)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {task.assignedTo || 'Unassigned'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    {!task.completed && (
-                      <>
-                        {task.assignedTo ? (
-                          <>
-                            {onUnassignTask && (
-                              <button
-                                onClick={() => onUnassignTask(task.id)}
-                                className="text-blue-600 hover:text-blue-900 text-xs"
+              filteredTasks.map((task) => {
+                const priority = PRIORITY_STYLES[task.priority] || PRIORITY_STYLES.low;
+                return (
+                  <tr key={task.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="px-6 py-4 font-semibold text-slate-900">{task.id}</td>
+                    <td className="px-6 py-4 max-w-xs">
+                      <p className="font-medium text-slate-900">{task.description}</p>
+                      <p className="text-xs text-slate-400 uppercase tracking-[0.2em] mt-1">
+                        Added {formatDate(task.createdAt)}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`badge inline-flex px-3 py-1 rounded-full text-xs ${priority.classes}`}>
+                        {priority.label}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-semibold text-slate-900">{task.timeEstimate}h</p>
+                      <p className="text-xs text-slate-400">Effort</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-slate-900">{formatDate(task.deadline)}</span>
+                        <span className="text-xs text-slate-400 uppercase tracking-[0.2em]">
+                          Deadline
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {task.assignedTo ? (
+                        <div>
+                          <p className="font-semibold text-slate-900">{task.assignedTo}</p>
+                          <span className="text-xs text-slate-400 uppercase tracking-[0.2em]">Assigned</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs uppercase tracking-[0.3em] text-slate-300">
+                          Unassigned
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {!task.completed && (
+                        <div className="flex flex-col gap-2">
+                          {task.assignedTo ? (
+                            <>
+                              {onUnassignTask && (
+                                <button
+                                  onClick={() => onUnassignTask(task.id)}
+                                  className="text-xs font-semibold px-4 py-2 rounded-full border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-400 transition-all"
+                                >
+                                  Unassign
+                                </button>
+                              )}
+                              {onCompleteTask && (
+                                <button
+                                  onClick={() => onCompleteTask(task.id)}
+                                  className="text-xs font-semibold px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow hover:shadow-lg transition-all"
+                                >
+                                  Complete
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            onAssignTask &&
+                            availableWorkers.length > 0 && (
+                              <select
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    onAssignTask(task.id, e.target.value);
+                                    e.target.value = '';
+                                  }
+                                }}
+                                className="text-xs border border-slate-200 rounded-full px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                                defaultValue=""
                               >
-                                Unassign
-                              </button>
-                            )}
-                            {onCompleteTask && (
-                              <button
-                                onClick={() => onCompleteTask(task.id)}
-                                className="text-green-600 hover:text-green-900 text-xs ml-2"
-                              >
-                                Complete
-                              </button>
-                            )}
-                          </>
-                        ) : (
-                          onAssignTask && availableWorkers.length > 0 && (
-                            <select
-                              onChange={(e) => {
-                                if (e.target.value) {
-                                  onAssignTask(task.id, e.target.value);
-                                  e.target.value = '';
-                                }
-                              }}
-                              className="text-xs border border-gray-300 rounded px-2 py-1"
-                              defaultValue=""
-                            >
-                              <option value="">Assign to...</option>
-                              {availableWorkers.map(worker => (
+                                <option value="">Assign to...</option>
+                              {availableWorkers.map((worker) => (
                                 <option key={worker.id} value={worker.id}>
-                                  {worker.name}
+                                  {worker.name} · {Math.max(0, 8 - worker.totalAssignedHours)}h free
                                 </option>
                               ))}
-                            </select>
-                          )
-                        )}
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))
+                              </select>
+                            )
+                          )}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

@@ -5,22 +5,21 @@ import Navigation from '@/components/Navigation';
 import {
   addWorker,
   addTask,
+  assignTaskToWorker,
   getWorkers,
   getAvailableWorkers,
   initializeData,
   validateDate,
 } from '@/lib/data';
-import { Priority } from '@/lib/types';
+import { Priority, Worker } from '@/lib/types';
 
 export default function AssignPage() {
-  const [workers, setWorkers] = useState<any[]>([]);
+  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [availableWorkers, setAvailableWorkers] = useState<Worker[]>([]);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
 
-  // Worker form state
   const [workerName, setWorkerName] = useState<string>('');
-
-  // Task form state
   const [taskDescription, setTaskDescription] = useState<string>('');
   const [taskPriority, setTaskPriority] = useState<Priority>('medium');
   const [taskTimeEstimate, setTaskTimeEstimate] = useState<number>(1);
@@ -34,24 +33,25 @@ export default function AssignPage() {
 
   const loadData = () => {
     setWorkers(getWorkers());
+    setAvailableWorkers(getAvailableWorkers());
   };
 
-  const showSuccess = (message: string) => {
-    setSuccess(message);
-    setError('');
-    setTimeout(() => setSuccess(''), 3000);
-  };
-
-  const showError = (message: string) => {
-    setError(message);
-    setSuccess('');
+  const showMessage = (type: 'success' | 'error', message: string) => {
+    if (type === 'success') {
+      setSuccess(message);
+      setError('');
+      setTimeout(() => setSuccess(''), 2500);
+    } else {
+      setError(message);
+      setSuccess('');
+    }
   };
 
   const handleAddWorker = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!workerName.trim()) {
-      showError('Worker name is required');
+      showMessage('error', 'Worker name is required');
       return;
     }
 
@@ -59,9 +59,9 @@ export default function AssignPage() {
       const newWorker = addWorker(workerName.trim());
       setWorkerName('');
       loadData();
-      showSuccess(`Worker ${newWorker.name} added successfully with ID ${newWorker.id}`);
+      showMessage('success', `Crew member ${newWorker.name} added (ID ${newWorker.id})`);
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to add worker');
+      showMessage('error', err instanceof Error ? err.message : 'Failed to add worker');
     }
   };
 
@@ -69,44 +69,30 @@ export default function AssignPage() {
     e.preventDefault();
 
     if (!taskDescription.trim()) {
-      showError('Task description is required');
+      showMessage('error', 'Task description is required');
       return;
     }
 
     if (!validateDate(taskDeadline)) {
-      showError('Please enter a valid deadline date');
+      showMessage('error', 'Please enter a valid deadline');
       return;
     }
 
     if (taskTimeEstimate <= 0) {
-      showError('Time estimate must be greater than 0');
+      showMessage('error', 'Time estimate must be greater than 0');
       return;
     }
 
     try {
-      const newTask = addTask(
-        taskDescription.trim(),
-        taskPriority,
-        taskTimeEstimate,
-        taskDeadline
-      );
+      const newTask = addTask(taskDescription.trim(), taskPriority, taskTimeEstimate, taskDeadline);
 
-      // If a worker is selected, assign the task
       if (assignToWorker) {
-        // Import the assign function dynamically to avoid circular imports
-        import('@/lib/data').then(({ assignTaskToWorker }) => {
-          try {
-            assignTaskToWorker(newTask.id, assignToWorker);
-            showSuccess(`Task "${newTask.description}" created and assigned to worker ${assignToWorker}`);
-          } catch (assignErr) {
-            showSuccess(`Task "${newTask.description}" created successfully, but assignment failed: ${assignErr instanceof Error ? assignErr.message : 'Unknown error'}`);
-          }
-        });
+        assignTaskToWorker(newTask.id, assignToWorker);
+        showMessage('success', `Task “${newTask.description}” created and assigned to ${assignToWorker}`);
       } else {
-        showSuccess(`Task "${newTask.description}" created successfully with ID ${newTask.id}`);
+        showMessage('success', `Task “${newTask.description}” created`);
       }
 
-      // Reset form
       setTaskDescription('');
       setTaskPriority('medium');
       setTaskTimeEstimate(1);
@@ -114,214 +100,231 @@ export default function AssignPage() {
       setAssignToWorker('');
       loadData();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to add task');
+      showMessage('error', err instanceof Error ? err.message : 'Failed to create task');
     }
   };
 
-  const availableWorkers = getAvailableWorkers();
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="page-shell min-h-screen">
       <Navigation />
 
-      <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Assign Tasks</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Add new workers and create tasks for your cleaning business
-          </p>
-        </div>
-
-        {/* Error/Success Messages */}
-        {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-            {success}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Add Worker Form */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                Add New Worker
-              </h3>
-              <form onSubmit={handleAddWorker} className="space-y-4">
-                <div>
-                  <label htmlFor="workerName" className="block text-sm font-medium text-gray-700">
-                    Worker Name
-                  </label>
-                  <input
-                    type="text"
-                    id="workerName"
-                    value={workerName}
-                    onChange={(e) => setWorkerName(e.target.value)}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    placeholder="Enter worker name"
-                    required
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Add Worker
-                </button>
-              </form>
-            </div>
-          </div>
-
-          {/* Create Task Form */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                Create New Task
-              </h3>
-              <form onSubmit={handleAddTask} className="space-y-4">
-                <div>
-                  <label htmlFor="taskDescription" className="block text-sm font-medium text-gray-700">
-                    Task Description
-                  </label>
-                  <textarea
-                    id="taskDescription"
-                    value={taskDescription}
-                    onChange={(e) => setTaskDescription(e.target.value)}
-                    rows={3}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    placeholder="Describe the cleaning task"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="taskPriority" className="block text-sm font-medium text-gray-700">
-                      Priority
-                    </label>
-                    <select
-                      id="taskPriority"
-                      value={taskPriority}
-                      onChange={(e) => setTaskPriority(e.target.value as Priority)}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label htmlFor="taskTimeEstimate" className="block text-sm font-medium text-gray-700">
-                      Time Estimate (hours)
-                    </label>
-                    <input
-                      type="number"
-                      id="taskTimeEstimate"
-                      value={taskTimeEstimate}
-                      onChange={(e) => setTaskTimeEstimate(Number(e.target.value))}
-                      min="0.5"
-                      step="0.5"
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      required
+      <main className="relative">
+        <div className="max-w-6xl mx-auto pt-12 pb-16 px-4 sm:px-6 lg:px-8 space-y-10">
+          <section className="card p-8 bg-gradient-to-br from-white via-white to-slate-50 relative overflow-hidden">
+            <div className="absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_center,_rgba(79,70,229,0.08),_transparent_55%)]" />
+            <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+              <div>
+                <p className="text-xs uppercase tracking-[0.6em] text-slate-400">Assignment Studio</p>
+                <h1 className="mt-3 text-4xl font-semibold text-slate-900">Create Workflows Effortlessly</h1>
+                <p className="mt-4 text-slate-500 max-w-2xl">
+                  Add crew members, prioritize high-impact cleans, and push jobs straight into the operations queue.
+                  Validation keeps capacity planning pristine while the interface stays beautifully minimal.
+                </p>
+              </div>
+              <div className="glass-panel rounded-3xl px-8 py-6 text-center">
+                <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Available Crew</p>
+                <p className="mt-4 text-5xl font-semibold text-slate-900">{availableWorkers.length}</p>
+                <p className="text-sm text-slate-500">Ready for deployment</p>
+                <div className="mt-6">
+                  <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                      style={{
+                        width: `${Math.round(
+                          (availableWorkers.length / Math.max(workers.length, 1)) * 100
+                        )}%`,
+                      }}
                     />
                   </div>
+                  <p className="mt-2 text-xs text-slate-400">
+                    {workers.length === 0 ? 'Add workers to unlock scheduling' : 'Capacity utilization'}
+                  </p>
                 </div>
+              </div>
+            </div>
+          </section>
 
-                <div>
-                  <label htmlFor="taskDeadline" className="block text-sm font-medium text-gray-700">
-                    Deadline
-                  </label>
+          {error && (
+            <div className="rounded-2xl border border-rose-100 bg-rose-50/80 text-rose-700 px-6 py-4 shadow">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/80 text-emerald-700 px-6 py-4 shadow">
+              {success}
+            </div>
+          )}
+
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <form onSubmit={handleAddWorker} className="card p-6 space-y-5">
+              <header>
+                <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Crew Intake</p>
+                <h2 className="mt-2 text-2xl font-semibold text-slate-900">Add New Worker</h2>
+                <p className="text-sm text-slate-500 mt-1">Capture remote staff and set them live in one tap.</p>
+              </header>
+              <label className="flex flex-col gap-2 text-sm font-medium text-slate-600">
+                Worker name
+                <input
+                  type="text"
+                  value={workerName}
+                  onChange={(e) => setWorkerName(e.target.value)}
+                  className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="e.g. Naomi Adeyemi"
+                  required
+                />
+              </label>
+              <button
+                type="submit"
+                className="w-full rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 font-semibold shadow-lg hover:shadow-xl transition-shadow"
+              >
+                Add Worker
+              </button>
+            </form>
+
+            <form onSubmit={handleAddTask} className="card p-6 space-y-5">
+              <header>
+                <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Task Intake</p>
+                <h2 className="mt-2 text-2xl font-semibold text-slate-900">Create Task</h2>
+                <p className="text-sm text-slate-500 mt-1">Set priority, effort, deadline, and optional owner.</p>
+              </header>
+              <label className="flex flex-col gap-2 text-sm font-medium text-slate-600">
+                Task description
+                <textarea
+                  value={taskDescription}
+                  onChange={(e) => setTaskDescription(e.target.value)}
+                  rows={4}
+                  className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Describe the cleaning scope, access notes, standards..."
+                  required
+                />
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label className="flex flex-col gap-2 text-sm font-medium text-slate-600">
+                  Priority
+                  <select
+                    value={taskPriority}
+                    onChange={(e) => setTaskPriority(e.target.value as Priority)}
+                    className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </label>
+                <label className="flex flex-col gap-2 text-sm font-medium text-slate-600">
+                  Time estimate (hours)
                   <input
-                    type="date"
-                    id="taskDeadline"
-                    value={taskDeadline}
-                    onChange={(e) => setTaskDeadline(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    type="number"
+                    value={taskTimeEstimate}
+                    onChange={(e) => setTaskTimeEstimate(Number(e.target.value))}
+                    min="0.5"
+                    step="0.5"
+                    className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                     required
                   />
-                </div>
-
-                <div>
-                  <label htmlFor="assignToWorker" className="block text-sm font-medium text-gray-700">
-                    Assign to Worker (Optional)
-                  </label>
-                  <select
-                    id="assignToWorker"
-                    value={assignToWorker}
-                    onChange={(e) => setAssignToWorker(e.target.value)}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  >
-                    <option value="">Don't assign yet</option>
-                    {availableWorkers.map((worker) => (
-                      <option key={worker.id} value={worker.id}>
-                        {worker.name} (Available: {8 - worker.totalAssignedHours}h)
-                      </option>
-                    ))}
-                  </select>
-                  {availableWorkers.length === 0 && (
-                    <p className="mt-1 text-sm text-gray-500">
-                      No available workers. Add workers or mark some as available.
-                    </p>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                </label>
+              </div>
+              <label className="flex flex-col gap-2 text-sm font-medium text-slate-600">
+                Deadline
+                <input
+                  type="date"
+                  value={taskDeadline}
+                  onChange={(e) => setTaskDeadline(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  required
+                />
+              </label>
+              <label className="flex flex-col gap-2 text-sm font-medium text-slate-600">
+                Assign to worker (optional)
+                <select
+                  value={assignToWorker}
+                  onChange={(e) => setAssignToWorker(e.target.value)}
+                  className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 >
-                  Create Task
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
+                  <option value="">Do not assign yet</option>
+                  {availableWorkers.map((worker) => (
+                    <option key={worker.id} value={worker.id}>
+                      {worker.name} — {8 - worker.totalAssignedHours}h free
+                    </option>
+                  ))}
+                </select>
+                {availableWorkers.length === 0 && (
+                  <p className="text-xs text-slate-400">
+                    No capacity available. Add workers or free up hours.
+                  </p>
+                )}
+              </label>
+              <button
+                type="submit"
+                className="w-full rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-3 font-semibold shadow-lg hover:shadow-xl transition-shadow"
+              >
+                Publish Task
+              </button>
+            </form>
+          </section>
 
-        {/* Current Workers Summary */}
-        <div className="mt-8 bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Current Workers ({workers.length})
-            </h3>
+          <section className="card p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Crew Roster</p>
+                <h2 className="mt-2 text-2xl font-semibold text-slate-900">
+                  Current Workers ({workers.length})
+                </h2>
+              </div>
+              <span className="badge px-4 py-2 rounded-full bg-slate-100 text-slate-600">
+                {availableWorkers.length} available
+              </span>
+            </div>
             {workers.length === 0 ? (
-              <p className="text-gray-500">No workers added yet.</p>
+              <div className="mt-8 text-center text-slate-400">
+                Add your first worker to kick off scheduling.
+              </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {workers.map((worker) => (
-                  <div key={worker.id} className="border border-gray-200 rounded-lg p-4">
+                  <div
+                    key={worker.id}
+                    className="rounded-2xl border border-slate-100 bg-white/80 px-4 py-4 shadow-sm"
+                  >
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900">{worker.name}</h4>
-                        <p className="text-sm text-gray-500">ID: {worker.id}</p>
+                        <p className="font-semibold text-slate-900">{worker.name}</p>
+                        <p className="text-xs text-slate-400 uppercase tracking-[0.3em]">
+                          {worker.id}
+                        </p>
                       </div>
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        className={`badge px-3 py-1 rounded-full text-xs ${
                           worker.availability
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                            : 'bg-slate-100 text-slate-500 border border-slate-200'
                         }`}
                       >
-                        {worker.availability ? 'Available' : 'Unavailable'}
+                        {worker.availability ? 'Available' : 'Offline'}
                       </span>
                     </div>
-                    <div className="mt-2">
-                      <p className="text-xs text-gray-600">
-                        Hours assigned: {worker.totalAssignedHours}/8
+                    <div className="mt-4">
+                      <p className="text-xs text-slate-400 uppercase tracking-[0.2em]">Load</p>
+                      <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-blue-500"
+                          style={{ width: `${(worker.totalAssignedHours / 8) * 100}%` }}
+                        />
+                      </div>
+                      <p className="mt-2 text-sm text-slate-500">
+                        {worker.totalAssignedHours}h / 8h booked
                       </p>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
+          </section>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
+

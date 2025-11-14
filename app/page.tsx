@@ -14,12 +14,14 @@ import {
   completeTask,
   initializeData,
 } from '@/lib/data';
+import { Worker, Task } from '@/lib/types';
 
 export default function Dashboard() {
-  const [workers, setWorkers] = useState<any[]>([]);
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [availableWorkers, setAvailableWorkers] = useState<any[]>([]);
+  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [availableWorkers, setAvailableWorkers] = useState<Worker[]>([]);
   const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<string>('');
 
   useEffect(() => {
     initializeData();
@@ -32,177 +34,184 @@ export default function Dashboard() {
     setAvailableWorkers(getAvailableWorkers());
   };
 
-  const handleToggleAvailability = (workerId: string, availability: boolean) => {
-    try {
-      updateWorkerAvailability(workerId, availability);
-      loadData();
+  const handleFeedback = (type: 'error' | 'success', message: string) => {
+    if (type === 'error') {
+      setError(message);
+      setSuccess('');
+    } else {
+      setSuccess(message);
       setError('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update worker availability');
+      setTimeout(() => setSuccess(''), 2500);
     }
+  };
+
+  const wrapAction = (fn: () => void, successMessage: string) => {
+    try {
+      fn();
+      loadData();
+      handleFeedback('success', successMessage);
+    } catch (err) {
+      handleFeedback(
+        'error',
+        err instanceof Error ? err.message : 'Something went wrong'
+      );
+    }
+  };
+
+  const handleToggleAvailability = (workerId: string, availability: boolean) => {
+    wrapAction(
+      () => updateWorkerAvailability(workerId, availability),
+      `Worker ${workerId} marked as ${availability ? 'available' : 'unavailable'}`
+    );
   };
 
   const handleAssignTask = (taskId: string, workerId: string) => {
-    try {
-      assignTaskToWorker(taskId, workerId);
-      loadData();
-      setError('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to assign task');
-    }
+    wrapAction(() => assignTaskToWorker(taskId, workerId), `Task ${taskId} assigned to ${workerId}`);
   };
 
   const handleUnassignTask = (taskId: string) => {
-    try {
-      unassignTask(taskId);
-      loadData();
-      setError('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to unassign task');
-    }
+    wrapAction(() => unassignTask(taskId), `Task ${taskId} is now unassigned`);
   };
 
   const handleCompleteTask = (taskId: string) => {
-    try {
-      completeTask(taskId);
-      loadData();
-      setError('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to complete task');
-    }
+    wrapAction(() => completeTask(taskId), `Task ${taskId} completed`);
   };
 
-  const activeTasks = tasks.filter(task => !task.completed);
-  const completedTasks = tasks.filter(task => task.completed);
+  const activeTasks = tasks.filter((task) => !task.completed);
+  const completedTasks = tasks.filter((task) => task.completed);
+
+  const summaryCards = [
+    {
+      label: 'Total Crew',
+      value: workers.length,
+      badge: 'Team Strength',
+      accent: 'from-purple-500 to-indigo-500',
+      footer: `${availableWorkers.length} currently available`,
+    },
+    {
+      label: 'Active Tasks',
+      value: activeTasks.length,
+      badge: 'In Motion',
+      accent: 'from-rose-500 to-amber-500',
+      footer: `${completedTasks.length} completed`,
+    },
+    {
+      label: 'Capacity',
+      value: `${availableWorkers.length}/${workers.length || 1}`,
+      badge: 'Ready Crew',
+      accent: 'from-emerald-500 to-teal-500',
+      footer: `${Math.round(
+        (availableWorkers.length / Math.max(workers.length, 1)) * 100
+      )}% availability`,
+    },
+    {
+      label: 'Upcoming Deadlines',
+      value: activeTasks.filter((task) => {
+        const diff = new Date(task.deadline).getTime() - Date.now();
+        return diff < 3 * 24 * 60 * 60 * 1000;
+      }).length,
+      badge: 'Next 72h',
+      accent: 'from-blue-500 to-cyan-500',
+      footer: 'Monitor urgent queue',
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="page-shell min-h-screen">
       <Navigation />
 
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Overview of your cleaning business operations
-          </p>
-        </div>
-
-        {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
-
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">W</span>
-                  </div>
+      <main className="relative">
+        <div className="max-w-7xl mx-auto pt-12 pb-16 px-4 sm:px-6 lg:px-8 space-y-10">
+          <section className="card p-8 bg-gradient-to-br from-white via-white to-slate-50 relative overflow-hidden">
+            <div className="absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_right,_rgba(124,58,237,0.08),_transparent_55%)]" />
+            <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+              <div>
+                <p className="text-xs uppercase tracking-[0.6em] text-slate-400">Executive View</p>
+                <h1 className="mt-3 text-4xl font-semibold text-slate-900">Operations Command Center</h1>
+                <p className="mt-4 text-slate-500 max-w-2xl">
+                  Monitor your remote cleaning teams, prioritize assignments, and keep every facility spotless.
+                  This panel synthesizes worker load, queue health, and upcoming deadlines in one elegant control room.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <span className="badge px-4 py-2 rounded-full bg-slate-100 text-slate-600">
+                    FIFO Scheduling
+                  </span>
+                  <span className="badge px-4 py-2 rounded-full bg-slate-100 text-slate-600">
+                    Priority Sorting
+                  </span>
+                  <span className="badge px-4 py-2 rounded-full bg-slate-100 text-slate-600">
+                    Real-time Capacity
+                  </span>
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Total Workers
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {workers.length}
-                    </dd>
-                  </dl>
+              </div>
+              <div className="glass-panel rounded-3xl px-8 py-6 text-center">
+                <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Today&apos;s Focus</p>
+                <p className="mt-4 text-5xl font-semibold text-slate-900">{activeTasks.length}</p>
+                <p className="text-sm text-slate-500">Jobs awaiting assignment or completion</p>
+                <div className="mt-6 flex flex-col gap-2 text-left text-sm text-slate-600">
+                  <div className="flex items-center justify-between">
+                    <span>Available crew</span>
+                    <span className="font-semibold text-slate-900">{availableWorkers.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Completed today</span>
+                    <span className="font-semibold text-slate-900">{completedTasks.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Urgent tasks</span>
+                    <span className="font-semibold text-rose-600">
+                      {
+                        activeTasks.filter((task) =>
+                          new Date(task.deadline).getTime() - Date.now() < 24 * 60 * 60 * 1000
+                        ).length
+                      }
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">A</span>
+          {error && (
+            <div className="rounded-2xl border border-rose-100 bg-rose-50/80 text-rose-700 px-6 py-4 shadow">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/80 text-emerald-700 px-6 py-4 shadow">
+              {success}
+            </div>
+          )}
+
+          <section>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+              {summaryCards.map((card) => (
+                <div key={card.label} className="card p-6 relative overflow-hidden">
+                  <div className={`absolute inset-x-4 top-4 h-32 rounded-3xl bg-gradient-to-r ${card.accent} opacity-10`} />
+                  <div className="relative">
+                    <p className="text-xs uppercase tracking-[0.4em] text-slate-400">{card.badge}</p>
+                    <p className="mt-4 text-4xl font-semibold text-slate-900">{card.value}</p>
+                    <p className="mt-2 text-sm text-slate-500">{card.label}</p>
+                    <p className="mt-4 text-xs uppercase tracking-[0.3em] text-slate-400">{card.footer}</p>
                   </div>
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Available Workers
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {availableWorkers.length}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
+              ))}
             </div>
-          </div>
+          </section>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">T</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Active Tasks
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {activeTasks.length}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">C</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Completed Tasks
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {completedTasks.length}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
+          <section className="space-y-10">
+            <WorkerTable workers={workers} onToggleAvailability={handleToggleAvailability} />
+            <TaskTable
+              tasks={activeTasks}
+              onAssignTask={handleAssignTask}
+              onUnassignTask={handleUnassignTask}
+              onCompleteTask={handleCompleteTask}
+              availableWorkers={availableWorkers}
+            />
+          </section>
         </div>
-
-        {/* Workers Table */}
-        <div className="mb-8">
-          <WorkerTable
-            workers={workers}
-            onToggleAvailability={handleToggleAvailability}
-          />
-        </div>
-
-        {/* Active Tasks Table */}
-        <div className="mb-8">
-          <TaskTable
-            tasks={activeTasks}
-            onAssignTask={handleAssignTask}
-            onUnassignTask={handleUnassignTask}
-            onCompleteTask={handleCompleteTask}
-            availableWorkers={availableWorkers}
-          />
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
