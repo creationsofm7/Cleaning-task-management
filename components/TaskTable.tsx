@@ -39,7 +39,7 @@ export default function TaskTable({
   const filteredTasks = showCompleted ? tasks : tasks.filter((task) => !task.completed);
 
   return (
-    <div className="border overflow-hidden">
+    <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
       <div className="px-4 py-3 border-b bg-gray-50">
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-medium">
@@ -71,7 +71,7 @@ export default function TaskTable({
               filteredTasks.map((task) => {
                 const priority = PRIORITY_STYLES[task.priority] || PRIORITY_STYLES.low;
                 return (
-                  <tr key={task.id} className="hover:bg-gray-50">
+                  <tr key={task.id} className="bg-white hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium">{task.id}</td>
                     <td className="px-4 py-3 max-w-xs">
                       <p className="font-medium">{task.description}</p>

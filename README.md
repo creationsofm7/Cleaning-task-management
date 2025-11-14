@@ -1,104 +1,143 @@
-# Cleaning Business Worker Management System
+# House Keeping Management Software - DSA Implementation
 
-A comprehensive web application demonstrating advanced **Data Structures and Algorithms (DSA)** concepts through a real-world cleaning business management system. Built with Next.js, TypeScript, and Tailwind CSS.
+A comprehensive task management application demonstrating practical implementation of **Data Structures and Algorithms (DSA)** concepts in a real-world housekeeping management system. Built with Next.js, TypeScript, and Tailwind CSS.
 
 ## 🎯 Project Overview
 
-This application implements a remote worker management system that assigns tasks to cleaning staff by ID, prioritizes them (high/medium/low), allocates time estimates, and sets deadlines. It serves as an educational showcase of how DSA principles are applied in practical software development.
+This application implements a worker management system for housekeeping services that assigns tasks to staff by ID, prioritizes them (high/medium/low), allocates time estimates, and sets deadlines. It serves as an educational showcase of how fundamental DSA principles are applied in practical software development.
 
 ### Key Features
-- **Worker Management**: Add, track, and manage cleaning staff availability
+- **Worker Management**: Add, track, and manage housekeeping staff availability
 - **Task Assignment**: Create and assign cleaning tasks with priorities and deadlines
-- **FIFO Queue Management**: Automatic task assignment with capacity constraints
+- **Workload Balancing**: Capacity-aware task assignment with 8-hour daily limits
 - **Advanced Filtering**: Search, sort, and filter tasks by multiple criteria
-- **Real-time Capacity Tracking**: Monitor worker workloads and availability
+- **Real-time Statistics**: Monitor worker utilization and task completion
 - **CSV Export**: Export task and worker data for reporting
 
 ## 🏗️ System Architecture
 
-### MVC Pattern Implementation
+### Data Structures & Algorithms Implementation
 ```
-├── Model (Data Layer)
-│   ├── lib/data.ts         # Core business logic & data operations
-│   ├── lib/types/index.ts  # TypeScript interfaces & type definitions
-│   └── Local Storage       # Persistence layer
+├── Core Data Structures (lib/data.ts)
+│   ├── Arrays (Worker[], Task[])        # Primary storage containers
+│   ├── Hash Map (Map<string, Worker>)    # O(1) worker lookups
+│   └── Priority Weight Mapping           # Sorting optimization
 │
-├── View (UI Layer)
-│   ├── components/         # Reusable React components
-│   └── app/                # Next.js pages & routing
+├── Algorithm Implementations
+│   ├── Sorting Algorithms                # Priority & deadline sorting
+│   ├── Search Algorithms                 # Multi-field text search
+│   ├── Filtering Algorithms              # Status & priority filtering
+│   └── Assignment Algorithms             # Capacity-aware task assignment
 │
-└── Controller (Logic Layer)
-    ├── Task Assignment     # Business rules & validation
-    ├── Sorting Algorithms  # Priority & deadline sorting
-    └── Queue Management    # FIFO operations
+└── UI Components (React/Next.js)
+    ├── Dashboard                         # Worker statistics display
+    ├── Task Assignment Interface         # Form-based task creation
+    └── Task Management Tables            # Filtered data presentation
 ```
-
-### Component Architecture
-- **Navigation**: Glass-morphism header with route management
-- **Dashboard**: Executive overview with statistics and data tables
-- **Assign Page**: Worker/task creation forms with validation
-- **Tasks Page**: Advanced filtering, sorting, and task management
-- **Data Tables**: Responsive tables with inline actions
 
 ## 🔍 DSA Implementation Details
 
-### Data Structures Used
+### Core Data Structures
 
-#### 1. **Arrays as FIFO Queues**
+#### 1. **Dynamic Arrays (`Worker[]`, `Task[]`)**
+**Location:** `lib/data.ts` (lines 7-8)
+
+**Implementation:**
 ```typescript
-// Task queue implementation using JavaScript Arrays
-tasks: Task[] = []; // FIFO queue for task assignment
-
-// Queue operations
-tasks.push(newTask);    // Enqueue (O(1))
-const task = tasks.shift(); // Dequeue (O(n) - JavaScript array limitation)
+let workers: Worker[] = [];
+let tasks: Task[] = [];
 ```
 
-**Use Case**: Task assignment follows First-In-First-Out (FIFO) scheduling. New tasks are added to the end of the queue and assigned to available workers in order.
+**DSA Characteristics:**
+- **Dynamic Resizing:** JavaScript arrays automatically resize as elements are added
+- **Time Complexity:**
+  - Access: O(1) - direct indexing
+  - Append: O(1) amortized - efficient for adding new workers/tasks
+  - Linear Search: O(n) - used for finding tasks by ID
+  - Filter Operations: O(n) - used extensively for data queries
 
-#### 2. **Hash Maps for O(1) Lookups**
+**Real-World Application:**
+- **Worker Roster:** Complete list of housekeeping staff
+- **Task Queue:** Collection of all cleaning assignments
+- **Filtering Operations:** `getAvailableWorkers()`, `getUnassignedTasks()`
+
+#### 2. **Hash Map for Worker Lookups (`Map<string, Worker>`)**
+**Location:** `lib/data.ts` (line 9)
+
+**Implementation:**
 ```typescript
-// Worker lookup table for instant access
-workerMap: Map<string, Worker> = new Map();
-
-// Operations
-workerMap.set(workerId, worker);     // O(1) insertion
-const worker = workerMap.get(workerId); // O(1) lookup
-workerMap.has(workerId);             // O(1) existence check
+let workerMap: Map<string, Worker> = new Map();
 ```
 
-**Use Case**: Instant worker lookup by ID when assigning tasks, checking availability, or updating status.
+**DSA Characteristics:**
+- **Hash Table Implementation:** JavaScript's native Map provides hash table functionality
+- **Key-Value Storage:** Worker IDs map directly to Worker objects
+- **Time Complexity:**
+  - Insertion: O(1) average case
+  - Lookup: O(1) average case
+  - Deletion: O(1) average case
+  - Iteration: O(n) for all workers
 
-#### 3. **Priority Weight System**
+**Performance Optimization:**
+- **Before Optimization:** O(n) linear search through workers array for each lookup
+- **After Optimization:** O(1) hash map access for instant worker retrieval
+- **Impact:** Eliminates performance bottlenecks in task assignment operations
+
+#### 3. **Priority Weight Mapping (Record/Object)**
+**Location:** `lib/data.ts` (lines 14-18)
+
+**Implementation:**
 ```typescript
 const PRIORITY_WEIGHTS: Record<Priority, number> = {
-  high: 3,      // Highest priority
-  medium: 2,    // Medium priority
-  low: 1,       // Lowest priority
+  high: 3,
+  medium: 2,
+  low: 1,
 };
 ```
 
-**Use Case**: Enables custom sorting algorithms based on business-defined priority levels.
+**DSA Characteristics:**
+- **Lookup Table:** Pre-computed mapping for priority levels
+- **Constant Time Access:** O(1) priority weight retrieval
+- **Memory Efficient:** No runtime calculations needed
 
-### Algorithms Implemented
+**Algorithmic Benefit:**
+- Enables efficient comparison-based sorting
+- Supports compound sorting (priority + deadline)
+- Business rule enforcement through numerical weights
 
-#### 1. **Priority-Based Sorting (O(n log n))**
+### Algorithm Implementations
+
+#### 1. **Compound Priority Sorting Algorithm (O(n log n))**
+**Location:** `lib/data.ts` `sortTasksByPriority()` (lines 199-207)
+
+**Implementation:**
 ```typescript
 export function sortTasksByPriority(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => {
-    // First sort by priority weight (descending)
     const priorityDiff = PRIORITY_WEIGHTS[b.priority] - PRIORITY_WEIGHTS[a.priority];
     if (priorityDiff !== 0) return priorityDiff;
 
-    // Then by deadline (ascending) for same priority
     return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
   });
 }
 ```
 
-**Use Case**: Dashboard and task views show tasks in priority order, ensuring high-impact cleaning jobs are addressed first.
+**Algorithm Analysis:**
+- **Primary Sort Key:** Priority weights (High: 3, Medium: 2, Low: 1)
+- **Secondary Sort Key:** Deadline timestamp (earliest first)
+- **Sorting Algorithm:** JavaScript's Timsort (stable, adaptive)
+- **Time Complexity:** O(n log n) - optimal for comparison-based sorting
+- **Space Complexity:** O(n) - creates shallow copy to avoid mutation
 
-#### 2. **Deadline-Based Sorting (O(n log n))**
+**Business Logic:**
+- High-priority tasks always appear before lower-priority tasks
+- Within same priority level, urgent deadlines take precedence
+- Ensures critical housekeeping tasks are addressed first
+
+#### 2. **Deadline-Based Temporal Sorting (O(n log n))**
+**Location:** `lib/data.ts` `sortTasksByDeadline()` (lines 209-213)
+
+**Implementation:**
 ```typescript
 export function sortTasksByDeadline(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => {
@@ -107,9 +146,17 @@ export function sortTasksByDeadline(tasks: Task[]): Task[] {
 }
 ```
 
-**Use Case**: Time-sensitive cleaning tasks are sorted by deadline to prevent service delays.
+**Algorithm Analysis:**
+- **Sort Criterion:** ISO date string converted to Unix timestamp
+- **Order:** Ascending (earliest deadlines first)
+- **Time Complexity:** O(n log n) with O(n) date parsing overhead
 
-#### 3. **Linear Search for Filtering (O(n))**
+**Use Case:** Prevents service delays by surfacing time-sensitive tasks
+
+#### 3. **Multi-Field Linear Search (O(n × m))**
+**Location:** `lib/data.ts` `searchTasks()` (lines 216-223)
+
+**Implementation:**
 ```typescript
 export function searchTasks(query: string): Task[] {
   const lowercaseQuery = query.toLowerCase();
@@ -121,38 +168,106 @@ export function searchTasks(query: string): Task[] {
 }
 ```
 
-**Use Case**: Real-time search functionality across task descriptions, IDs, and assigned workers.
+**Algorithm Analysis:**
+- **Search Strategy:** Substring matching across multiple fields
+- **Case Insensitive:** Normalization prevents case-sensitivity issues
+- **Fields Searched:** Task description, Task ID, Assigned worker ID
+- **Time Complexity:** O(n × m) where m = average field length
 
-#### 4. **Capacity-Aware Assignment Algorithm**
+**Real-World Optimization:**
+- Immediate user feedback for task discovery
+- No database indexing required for typical dataset sizes (< 1000 tasks)
+- Supports partial matches and typos
+
+#### 4. **Set-Based Deduplication Algorithm**
+**Location:** `app/page.tsx` (lines 85-89)
+
+**Implementation:**
+```typescript
+const workingWorkers = new Set(
+  tasks
+    .filter((task) => task.assignedTo && !task.completed)
+    .map((task) => task.assignedTo)
+).size;
+```
+
+**Algorithm Analysis:**
+- **Data Structure:** JavaScript Set for automatic deduplication
+- **Time Complexity:** O(n) for filtering + O(k) for Set construction (k = unique workers)
+- **Space Complexity:** O(k) for Set storage
+
+**Algorithmic Purpose:**
+- Prevents double-counting workers with multiple concurrent tasks
+- Accurate workforce utilization statistics
+- Eliminates manual deduplication logic
+
+#### 5. **Capacity-Constrained Task Assignment**
+**Location:** `lib/data.ts` `assignTaskToWorker()` (lines 139-170)
+
+**Implementation:**
 ```typescript
 export function assignTaskToWorker(taskId: string, workerId: string): void {
-  const worker = workerMap.get(workerId);
   const task = tasks.find(t => t.id === taskId);
+  const worker = workerMap.get(workerId);
 
-  // Capacity validation
+  // Constraint validation
   if (worker.totalAssignedHours + task.timeEstimate > MAX_WORK_HOURS_PER_DAY) {
-    throw new Error(`Worker would exceed maximum hours (${MAX_WORK_HOURS_PER_DAY})`);
+    throw new Error('Capacity exceeded');
   }
 
-  // Assignment with capacity tracking
+  // Handle reassignment
+  if (task.assignedTo) {
+    const prevWorker = workerMap.get(task.assignedTo);
+    if (prevWorker) prevWorker.totalAssignedHours -= task.timeEstimate;
+  }
+
+  // Atomic assignment
   task.assignedTo = workerId;
   worker.totalAssignedHours += task.timeEstimate;
+  saveData();
 }
 ```
 
-**Use Case**: Prevents worker overload by enforcing 8-hour daily capacity limits.
+**Algorithm Analysis:**
+- **Constraint Validation:** Worker availability + capacity checking
+- **State Management:** Maintains running total of assigned hours
+- **Reassignment Handling:** Properly unassigns from previous worker
+- **Atomic Operations:** All changes committed together or rolled back
 
-### Performance Characteristics
+**Business Rules Enforced:**
+- 8-hour daily maximum per worker
+- Prevents over-assignment and worker burnout
+- Maintains data consistency across operations
 
-| Operation | Time Complexity | Space Complexity | Use Case |
-|-----------|----------------|------------------|----------|
-| Worker Lookup | O(1) | O(n) | Task assignment |
-| Task Search | O(n) | O(1) | Filtering tasks |
-| Priority Sort | O(n log n) | O(n) | Dashboard display |
-| Queue Operations | O(1) enqueue, O(n) dequeue* | O(n) | Task management |
-| CSV Export | O(n) | O(n) | Data reporting |
+### Performance Analysis & Complexity
 
-*Note: JavaScript Array.shift() is O(n), but for this application size (typically <100 tasks), this is acceptable.
+| Operation | Time Complexity | Space Complexity | Data Structure Used | Real-World Impact |
+|-----------|----------------|------------------|-------------------|-------------------|
+| Worker Lookup by ID | O(1) | O(1) | Hash Map | Instant task assignment |
+| Task Search by ID | O(n) | O(1) | Array Linear Search | Fast for small datasets |
+| Multi-field Task Search | O(n × m) | O(n) | Array Filter | Immediate user feedback |
+| Priority-based Sorting | O(n log n) | O(n) | Timsort | Optimal for comparison sorting |
+| Worker Capacity Filter | O(n) | O(1) | Array Filter | Quick availability checks |
+| Set Deduplication | O(n) | O(k) | Hash Set | Accurate statistics |
+| Task Assignment | O(n) | O(1) | Hash Map + Array | Atomic operations |
+
+**Complexity Notes:**
+- **Hash Map Operations:** O(1) average case due to JavaScript's efficient Map implementation
+- **Array Operations:** O(n) for searches, but acceptable for housekeeping business scale (< 1000 records)
+- **Sorting:** JavaScript's Timsort provides stable, adaptive sorting with O(n log n) worst case
+- **Filtering:** Multiple sequential filters reduce dataset size progressively for better performance
+
+### Space Complexity Analysis
+
+**Total Application Memory:** O(w + t)
+- **w:** Number of workers (stored in array + hash map)
+- **t:** Number of tasks (stored in array)
+- **Overhead:** Minimal - no complex data structures or caching layers
+
+**Memory Optimization Strategies:**
+- **Shallow Copies:** Sorting operations use shallow copying to avoid full object duplication
+- **Reference Reuse:** Filter operations reuse array references when possible
+- **No External Dependencies:** Pure JavaScript data structures with predictable memory usage
 
 ## 🚀 Getting Started
 

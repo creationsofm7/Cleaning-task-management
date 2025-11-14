@@ -126,8 +126,46 @@ export default function AssignPage() {
             </div>
           )}
 
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <form onSubmit={handleAddWorker} className="border p-4 space-y-4">
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Workers Section - Left Column */}
+            <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
+              <div className="p-4 border-b border-slate-200">
+                <h2 className="text-lg font-medium">Workers ({workers.length})</h2>
+              </div>
+              <div className="p-4 max-h-96 overflow-y-auto">
+                {workers.length === 0 ? (
+                  <p className="text-gray-500">No workers yet</p>
+                ) : (
+                  <div className="space-y-3">
+                    {workers.map((worker) => (
+                      <div key={worker.id} className="bg-slate-50 border border-slate-200 rounded-lg p-3 shadow-sm">
+                        <div className="flex justify-between">
+                          <div>
+                            <p className="font-medium">{worker.name}</p>
+                            <p className="text-sm text-gray-500">{worker.id}</p>
+                          </div>
+                          <span className={`px-2 py-1 text-sm ${worker.availability ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                            {worker.availability ? 'Available' : 'Unavailable'}
+                          </span>
+                        </div>
+                        <div className="mt-2">
+                          <p className="text-sm">{worker.totalAssignedHours}/8 hours</p>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-blue-500 h-2 rounded-full"
+                              style={{ width: `${(worker.totalAssignedHours / 8) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Add Worker Form - Middle Column */}
+            <form onSubmit={handleAddWorker} className="bg-white border border-slate-200 rounded-lg p-4 space-y-4 shadow-sm">
               <h2 className="text-lg font-medium">Add Worker</h2>
               <label className="block">
                 Name
@@ -144,7 +182,8 @@ export default function AssignPage() {
               </button>
             </form>
 
-            <form onSubmit={handleAddTask} className="border p-4 space-y-4">
+            {/* Create Task Form - Right Column */}
+            <form onSubmit={handleAddTask} className="bg-white border border-slate-200 rounded-lg p-4 space-y-4 shadow-sm">
               <h2 className="text-lg font-medium">Create Task</h2>
               <label className="block">
                 Description
@@ -212,38 +251,6 @@ export default function AssignPage() {
                 Create Task
               </button>
             </form>
-          </section>
-
-          <section className="border p-4">
-            <h2 className="text-lg font-medium mb-4">Workers ({workers.length})</h2>
-            {workers.length === 0 ? (
-              <p className="text-gray-500">No workers yet</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {workers.map((worker) => (
-                  <div key={worker.id} className="border p-3">
-                    <div className="flex justify-between">
-                      <div>
-                        <p className="font-medium">{worker.name}</p>
-                        <p className="text-sm text-gray-500">{worker.id}</p>
-                      </div>
-                      <span className={`px-2 py-1 text-sm ${worker.availability ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                        {worker.availability ? 'Available' : 'Unavailable'}
-                      </span>
-                    </div>
-                    <div className="mt-2">
-                      <p className="text-sm">{worker.totalAssignedHours}/8 hours</p>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-500 h-2 rounded-full"
-                          style={{ width: `${(worker.totalAssignedHours / 8) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </section>
         </div>
       </main>

@@ -17,12 +17,12 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 via-indigo-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-              CB
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+              HK
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Operations Suite</p>
-              <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">Cleaning Business HQ</h1>
+              <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">House Keeping Management Software</h1>
             </div>
           </div>
 
@@ -46,12 +46,6 @@ export default function Navigation() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex flex-col text-right">
-              <span className="text-xs uppercase tracking-widest text-slate-400">Support</span>
-              <a href="mailto:ops@cleaningbusiness.com" className="text-sm font-semibold text-slate-900">
-                ops@cleaningbusiness.com
-              </a>
-            </div>
             <div className="lg:hidden">
               <nav className="flex items-center gap-2 bg-white/80 backdrop-blur px-3 py-2 rounded-full border border-white/70 shadow">
                 {navItems.map((item) => {

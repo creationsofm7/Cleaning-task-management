@@ -181,7 +181,7 @@ export default function TasksPage() {
             </div>
           )}
 
-          <section className="border p-4">
+          <section className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
             <div className="flex flex-wrap items-center gap-4 mb-4">
               <div className="flex-1 min-w-[200px]">
                 <label className="block text-sm font-medium mb-1">Search</label>

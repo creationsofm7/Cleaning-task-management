@@ -3,44 +3,37 @@ import { Worker, Task, WorkerManagementData, Priority } from './types';
 const STORAGE_KEY = 'cleaning-business-data';
 const MAX_WORK_HOURS_PER_DAY = 8;
 
-// In-memory data structures
 let workers: Worker[] = [];
 let tasks: Task[] = [];
 let workerMap: Map<string, Worker> = new Map();
 let nextWorkerId = 1;
 let nextTaskId = 1;
 
-// Priority weights for sorting (higher number = higher priority)
 const PRIORITY_WEIGHTS: Record<Priority, number> = {
   high: 3,
   medium: 2,
   low: 1,
 };
 
-// Initialize data from localStorage
 export function initializeData(): void {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed: WorkerManagementData = JSON.parse(stored);
 
-      // Validate and load workers
       workers = parsed.workers || [];
       workerMap.clear();
       workers.forEach(worker => {
         workerMap.set(worker.id, worker);
       });
 
-      // Validate and load tasks
       tasks = parsed.tasks || [];
 
-      // Set next IDs
       nextWorkerId = parsed.nextWorkerId || 1;
       nextTaskId = parsed.nextTaskId || 1;
     }
   } catch (error) {
     console.error('Failed to load data from localStorage:', error);
-    // Reset to empty state if corruption detected
     workers = [];
     tasks = [];
     workerMap.clear();
@@ -49,7 +42,6 @@ export function initializeData(): void {
   }
 }
 
-// Save data to localStorage
 export function saveData(): void {
   try {
     const data: WorkerManagementData = {
@@ -65,7 +57,6 @@ export function saveData(): void {
   }
 }
 
-// Worker operations
 export function getWorkers(): Worker[] {
   return [...workers];
 }
@@ -106,7 +97,6 @@ export function getWorkerById(id: string): Worker | undefined {
   return workerMap.get(id);
 }
 
-// Task operations
 export function getTasks(): Task[] {
   return [...tasks];
 }
@@ -156,7 +146,6 @@ export function assignTaskToWorker(taskId: string, workerId: string): void {
     throw new Error(`Worker ${worker.name} would exceed maximum hours (${MAX_WORK_HOURS_PER_DAY})`);
   }
 
-  // Remove previous assignment if any
   if (task.assignedTo) {
     const prevWorker = workerMap.get(task.assignedTo);
     if (prevWorker) {
@@ -195,13 +184,11 @@ export function completeTask(taskId: string): void {
   saveData();
 }
 
-// Sorting and prioritization functions
 export function sortTasksByPriority(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => {
     const priorityDiff = PRIORITY_WEIGHTS[b.priority] - PRIORITY_WEIGHTS[a.priority];
     if (priorityDiff !== 0) return priorityDiff;
 
-    // If same priority, sort by deadline (earliest first)
     return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
   });
 }
@@ -212,7 +199,6 @@ export function sortTasksByDeadline(tasks: Task[]): Task[] {
   });
 }
 
-// Search functionality
 export function searchTasks(query: string): Task[] {
   const lowercaseQuery = query.toLowerCase();
   return tasks.filter(task =>
@@ -221,8 +207,6 @@ export function searchTasks(query: string): Task[] {
     (task.assignedTo && task.assignedTo.toLowerCase().includes(lowercaseQuery))
   );
 }
-
-// Validation functions
 export function validateWorkerId(id: string): boolean {
   return /^W\d{3}$/.test(id);
 }
@@ -236,7 +220,6 @@ export function validateDate(dateString: string): boolean {
   return date instanceof Date && !isNaN(date.getTime());
 }
 
-// Export/import functionality
 export function exportToCSV(): string {
   const headers = ['ID', 'Description', 'Priority', 'Time Estimate', 'Deadline', 'Assigned To', 'Status', 'Created At'];
   const rows = tasks.map(task => [
