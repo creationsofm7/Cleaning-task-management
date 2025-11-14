@@ -39,41 +39,31 @@ export default function TaskTable({
   const filteredTasks = showCompleted ? tasks : tasks.filter((task) => !task.completed);
 
   return (
-    <div className="card overflow-hidden">
-      <div className="px-6 py-6 border-b border-slate-100/80 bg-gradient-to-r from-white via-white to-indigo-50">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Workflow</p>
-            <h3 className="text-2xl font-semibold text-slate-900">
-              Tasks {showCompleted ? 'Overview' : 'In Progress'}
-            </h3>
-            <p className="text-sm text-slate-500 mt-2">
-              {showCompleted ? 'All assignments including completed work' : 'Active queue awaiting action'}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-4xl font-semibold text-slate-900">{filteredTasks.length}</p>
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Tasks</p>
-          </div>
+    <div className="border overflow-hidden">
+      <div className="px-4 py-3 border-b bg-gray-50">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-medium">
+            Tasks ({filteredTasks.length})
+          </h3>
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-100 text-sm">
-          <thead className="bg-slate-50 text-slate-500">
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-gray-50 text-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left font-semibold">ID</th>
-              <th className="px-6 py-3 text-left font-semibold">Task</th>
-              <th className="px-6 py-3 text-left font-semibold">Priority</th>
-              <th className="px-6 py-3 text-left font-semibold">Time</th>
-              <th className="px-6 py-3 text-left font-semibold">Deadline</th>
-              <th className="px-6 py-3 text-left font-semibold">Assignment</th>
-              <th className="px-6 py-3 text-left font-semibold">Actions</th>
+              <th className="px-4 py-2 text-left font-medium">ID</th>
+              <th className="px-4 py-2 text-left font-medium">Task</th>
+              <th className="px-4 py-2 text-left font-medium">Priority</th>
+              <th className="px-4 py-2 text-left font-medium">Time</th>
+              <th className="px-4 py-2 text-left font-medium">Deadline</th>
+              <th className="px-4 py-2 text-left font-medium">Assignment</th>
+              <th className="px-4 py-2 text-left font-medium">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 bg-white">
+          <tbody className="divide-y divide-gray-200 bg-white">
             {filteredTasks.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-10 text-center text-slate-400">
+                <td colSpan={7} className="px-4 py-6 text-center text-gray-500">
                   No tasks found.
                 </td>
               </tr>
@@ -81,44 +71,33 @@ export default function TaskTable({
               filteredTasks.map((task) => {
                 const priority = PRIORITY_STYLES[task.priority] || PRIORITY_STYLES.low;
                 return (
-                  <tr key={task.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="px-6 py-4 font-semibold text-slate-900">{task.id}</td>
-                    <td className="px-6 py-4 max-w-xs">
-                      <p className="font-medium text-slate-900">{task.description}</p>
-                      <p className="text-xs text-slate-400 uppercase tracking-[0.2em] mt-1">
+                  <tr key={task.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium">{task.id}</td>
+                    <td className="px-4 py-3 max-w-xs">
+                      <p className="font-medium">{task.description}</p>
+                      <p className="text-xs text-gray-500 mt-1">
                         Added {formatDate(task.createdAt)}
                       </p>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`badge inline-flex px-3 py-1 rounded-full text-xs ${priority.classes}`}>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded text-xs ${priority.classes}`}>
                         {priority.label}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <p className="font-semibold text-slate-900">{task.timeEstimate}h</p>
-                      <p className="text-xs text-slate-400">Effort</p>
+                    <td className="px-4 py-3">
+                      <p className="font-medium">{task.timeEstimate}h</p>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-900">{formatDate(task.deadline)}</span>
-                        <span className="text-xs text-slate-400 uppercase tracking-[0.2em]">
-                          Deadline
-                        </span>
-                      </div>
+                    <td className="px-4 py-3">
+                      <span className="font-medium">{formatDate(task.deadline)}</span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       {task.assignedTo ? (
-                        <div>
-                          <p className="font-semibold text-slate-900">{task.assignedTo}</p>
-                          <span className="text-xs text-slate-400 uppercase tracking-[0.2em]">Assigned</span>
-                        </div>
+                        <span className="font-medium">{task.assignedTo}</span>
                       ) : (
-                        <span className="text-xs uppercase tracking-[0.3em] text-slate-300">
-                          Unassigned
-                        </span>
+                        <span className="text-gray-400">Unassigned</span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       {!task.completed && (
                         <div className="flex flex-col gap-2">
                           {task.assignedTo ? (
@@ -126,7 +105,7 @@ export default function TaskTable({
                               {onUnassignTask && (
                                 <button
                                   onClick={() => onUnassignTask(task.id)}
-                                  className="text-xs font-semibold px-4 py-2 rounded-full border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-400 transition-all"
+                                  className="px-3 py-1 border text-sm"
                                 >
                                   Unassign
                                 </button>
@@ -134,7 +113,7 @@ export default function TaskTable({
                               {onCompleteTask && (
                                 <button
                                   onClick={() => onCompleteTask(task.id)}
-                                  className="text-xs font-semibold px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow hover:shadow-lg transition-all"
+                                  className="px-3 py-1 bg-green-500 text-white text-sm"
                                 >
                                   Complete
                                 </button>
@@ -150,13 +129,13 @@ export default function TaskTable({
                                     e.target.value = '';
                                   }
                                 }}
-                                className="text-xs border border-slate-200 rounded-full px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                                className="border px-3 py-1 text-sm"
                                 defaultValue=""
                               >
                                 <option value="">Assign to...</option>
                               {availableWorkers.map((worker) => (
                                 <option key={worker.id} value={worker.id}>
-                                  {worker.name} · {Math.max(0, 8 - worker.totalAssignedHours)}h free
+                                  {worker.name}
                                 </option>
                               ))}
                               </select>

@@ -159,79 +159,16 @@ export default function TasksPage() {
     setPriorityFilter('all');
   };
 
-  const stats = [
-    {
-      label: 'Total Tasks',
-      value: allTasks.length,
-      badge: 'Pipeline',
-      accent: 'from-purple-500 to-indigo-500',
-    },
-    {
-      label: 'Active Tasks',
-      value: allTasks.filter((t) => !t.completed).length,
-      badge: 'In Motion',
-      accent: 'from-amber-500 to-rose-500',
-    },
-    {
-      label: 'Completed',
-      value: allTasks.filter((t) => t.completed).length,
-      badge: 'Closed',
-      accent: 'from-emerald-500 to-teal-500',
-    },
-    {
-      label: 'Unassigned',
-      value: allTasks.filter((t) => !t.assignedTo && !t.completed).length,
-      badge: 'Queue',
-      accent: 'from-blue-500 to-cyan-500',
-    },
-  ];
 
   return (
     <div className="page-shell min-h-screen">
       <Navigation />
 
       <main className="relative">
-        <div className="max-w-7xl mx-auto pt-12 pb-16 px-4 sm:px-6 lg:px-8 space-y-10">
-          <section className="card p-8 bg-gradient-to-br from-white via-white to-slate-50 relative overflow-hidden">
-            <div className="absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_right,_rgba(37,99,235,0.08),_transparent_55%)]" />
-            <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-              <div>
-                <p className="text-xs uppercase tracking-[0.6em] text-slate-400">Task Command</p>
-                <h1 className="mt-3 text-4xl font-semibold text-slate-900">Operational Workbench</h1>
-                <p className="mt-4 text-slate-500 max-w-2xl">
-                  Prioritize cleans, balance worker loads, and keep every facility spotless. Filter by priority,
-                  deadline, assignment state, or search by keyword with lightning responsiveness.
-                </p>
-              </div>
-              <div className="glass-panel rounded-3xl px-8 py-6 text-center">
-                <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Live Queue</p>
-                <p className="mt-4 text-5xl font-semibold text-slate-900">{filteredTasks.length}</p>
-                <p className="text-sm text-slate-500">Tasks matching filters</p>
-                <div className="mt-6 flex flex-col gap-2 text-left text-sm text-slate-600">
-                  <div className="flex items-center justify-between">
-                    <span>High priority</span>
-                    <span className="font-semibold text-slate-900">
-                      {filteredTasks.filter((t) => t.priority === 'high').length}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Assigned</span>
-                    <span className="font-semibold text-slate-900">
-                      {filteredTasks.filter((t) => t.assignedTo).length}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Due in 48h</span>
-                    <span className="font-semibold text-rose-600">
-                      {filteredTasks.filter(
-                        (t) => new Date(t.deadline).getTime() - Date.now() < 2 * 24 * 60 * 60 * 1000
-                      ).length}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+        <div className="max-w-7xl mx-auto pt-8 pb-16 px-4 sm:px-6 lg:px-8 space-y-8">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">View Tasks</h1>
+          </div>
 
           {error && (
             <div className="rounded-2xl border border-rose-100 bg-rose-50/80 text-rose-700 px-6 py-4 shadow">
@@ -244,37 +181,24 @@ export default function TasksPage() {
             </div>
           )}
 
-          <section className="card p-6 space-y-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex-1 min-w-[220px]">
-                <label className="text-xs uppercase tracking-[0.3em] text-slate-400">Search</label>
+          <section className="border p-4">
+            <div className="flex flex-wrap items-center gap-4 mb-4">
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-sm font-medium mb-1">Search</label>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by task, ID, or worker..."
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Search tasks..."
+                  className="w-full border px-3 py-2"
                 />
               </div>
-              <div className="flex-1 min-w-[180px]">
-                <label className="text-xs uppercase tracking-[0.3em] text-slate-400">Sort</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                >
-                  <option value="none">No sorting</option>
-                  <option value="priority">Priority</option>
-                  <option value="deadline">Deadline</option>
-                  <option value="created">Created date</option>
-                </select>
-              </div>
-              <div className="flex-1 min-w-[180px]">
-                <label className="text-xs uppercase tracking-[0.3em] text-slate-400">Status</label>
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-sm font-medium mb-1">Status</label>
                 <select
                   value={filterBy}
                   onChange={(e) => setFilterBy(e.target.value as FilterOption)}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="w-full border px-3 py-2"
                 >
                   <option value="all">All</option>
                   <option value="active">Active</option>
@@ -283,12 +207,12 @@ export default function TasksPage() {
                   <option value="unassigned">Unassigned</option>
                 </select>
               </div>
-              <div className="flex-1 min-w-[180px]">
-                <label className="text-xs uppercase tracking-[0.3em] text-slate-400">Priority</label>
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-sm font-medium mb-1">Priority</label>
                 <select
                   value={priorityFilter}
                   onChange={(e) => setPriorityFilter(e.target.value as Priority | 'all')}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="w-full border px-3 py-2"
                 >
                   <option value="all">All</option>
                   <option value="high">High</option>
@@ -296,50 +220,13 @@ export default function TasksPage() {
                   <option value="low">Low</option>
                 </select>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={clearFilters}
-                  className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-                >
-                  Clear
-                </button>
-                <button
-                  onClick={handleExportCSV}
-                  className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 text-sm font-semibold shadow hover:shadow-lg"
-                >
-                  Export CSV
-                </button>
-              </div>
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 border"
+              >
+                Clear
+              </button>
             </div>
-            <div className="flex flex-wrap gap-3">
-              {(['all', 'active', 'completed', 'assigned', 'unassigned'] as FilterOption[]).map(
-                (status) => (
-                  <button
-                    key={status}
-                    onClick={() => setFilterBy(status)}
-                    className={`badge px-4 py-2 rounded-full text-xs ${
-                      filterBy === status
-                        ? 'bg-slate-900 text-white'
-                        : 'bg-slate-100 text-slate-500'
-                    }`}
-                  >
-                    {status.toUpperCase()}
-                  </button>
-                )
-              )}
-            </div>
-          </section>
-          <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-            {stats.map((stat) => (
-              <div key={stat.label} className="card p-6 relative overflow-hidden">
-                <div className={`absolute inset-x-4 top-4 h-32 rounded-3xl bg-gradient-to-r ${stat.accent} opacity-20`} />
-                <div className="relative">
-                  <p className="text-xs uppercase tracking-[0.4em] text-slate-400">{stat.badge}</p>
-                  <p className="mt-4 text-4xl font-semibold text-slate-900">{stat.value}</p>
-                  <p className="mt-2 text-sm text-slate-500">{stat.label}</p>
-                </div>
-              </div>
-            ))}
           </section>
 
           <section className="space-y-6">
@@ -353,10 +240,8 @@ export default function TasksPage() {
             />
 
             {filteredTasks.length === 0 && (
-              <div className="card p-8 text-center text-slate-400">
-                {allTasks.length === 0
-                  ? 'No tasks found. Create assignments to populate the queue.'
-                  : 'No tasks match your current filters.'}
+              <div className="text-center text-gray-500 mt-8">
+                {allTasks.length === 0 ? 'No tasks yet' : 'No tasks match filters'}
               </div>
             )}
           </section>
